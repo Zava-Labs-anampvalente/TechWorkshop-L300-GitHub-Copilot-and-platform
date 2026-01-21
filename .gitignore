@@ -136,6 +136,9 @@ coverage-html/
 # Generated files
 appsettings.*.json
 
+# Azure Developer CLI
+.azure/
+
 # Misc
 Thumbs.db
 desktop.ini

@@ -1,0 +1,114 @@
+name: Build and Push to ACR
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'src/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'src/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  IMAGE_NAME: zavastorefront
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get ACR name
+        id: get-acr
+        run: |
+          # Get ACR name from Azure resources
+          ACR_NAME=$(az acr list --query "[?starts_with(name, 'acr')].name" -o tsv | head -1)
+          echo "acr-name=$ACR_NAME" >> $GITHUB_OUTPUT
+          echo "Found ACR: $ACR_NAME"
+
+      - name: Build and push image to ACR
+        run: |
+          ACR_NAME="${{ steps.get-acr.outputs.acr-name }}"
+          if [ -z "$ACR_NAME" ]; then
+            echo "Error: ACR not found. Please provision infrastructure first."
+            exit 1
+          fi
+          
+          echo "Building and pushing image to ACR: $ACR_NAME"
+          az acr build \
+            --registry $ACR_NAME \
+            --image ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
+            --image ${{ env.IMAGE_NAME }}:latest \
+            --file ./src/Dockerfile \
+            ./src
+
+      - name: Update Web App with new image
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        run: |
+          ACR_NAME="${{ steps.get-acr.outputs.acr-name }}"
+          ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
+          
+          # Find the Web App
+          WEB_APP_NAME=$(az webapp list --query "[?contains(name, 'zavastorefront')].name" -o tsv | head -1)
+          
+          if [ -z "$WEB_APP_NAME" ]; then
+            echo "Warning: Web App not found. Skipping deployment."
+            exit 0
+          fi
+          
+          echo "Updating Web App: $WEB_APP_NAME"
+          az webapp config container set \
+            --name $WEB_APP_NAME \
+            --resource-group $(az webapp show --name $WEB_APP_NAME --query resourceGroup -o tsv) \
+            --docker-custom-image-name ${ACR_LOGIN_SERVER}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
+            --docker-registry-server-url https://${ACR_LOGIN_SERVER}
+          
+          echo "Web App updated successfully"
+
+      - name: Restart Web App
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        run: |
+          WEB_APP_NAME=$(az webapp list --query "[?contains(name, 'zavastorefront')].name" -o tsv | head -1)
+          
+          if [ -z "$WEB_APP_NAME" ]; then
+            echo "Warning: Web App not found. Skipping restart."
+            exit 0
+          fi
+          
+          echo "Restarting Web App: $WEB_APP_NAME"
+          az webapp restart \
+            --name $WEB_APP_NAME \
+            --resource-group $(az webapp show --name $WEB_APP_NAME --query resourceGroup -o tsv)
+          
+          echo "Web App restarted successfully"
+
+      - name: Display deployment info
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        run: |
+          WEB_APP_NAME=$(az webapp list --query "[?contains(name, 'zavastorefront')].name" -o tsv | head -1)
+          
+          if [ ! -z "$WEB_APP_NAME" ]; then
+            WEB_APP_URL=$(az webapp show --name $WEB_APP_NAME --query defaultHostName -o tsv)
+            echo "✅ Deployment complete!"
+            echo "🌐 Web App URL: https://${WEB_APP_URL}"
+          fi
