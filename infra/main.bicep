@@ -50,8 +50,8 @@ param deployFoundry bool = true
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = {
   'azd-env-name': environmentName
-  'environment': 'dev'
-  'application': appName
+  environment: 'dev'
+  application: appName
 }
 
 // Resource names

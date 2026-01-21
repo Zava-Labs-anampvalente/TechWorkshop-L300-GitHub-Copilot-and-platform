@@ -1,0 +1,123 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "3417570531531439197"
+    }
+  },
+  "parameters": {
+    "foundryName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Microsoft Foundry resource"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for Microsoft Foundry"
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "SKU for Microsoft Foundry"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Tags to apply to the resource"
+      }
+    },
+    "deployments": {
+      "type": "array",
+      "defaultValue": [
+        {
+          "name": "gpt-4",
+          "model": {
+            "format": "OpenAI",
+            "name": "gpt-4",
+            "version": "0613"
+          },
+          "sku": {
+            "name": "Standard",
+            "capacity": 10
+          }
+        },
+        {
+          "name": "phi-3",
+          "model": {
+            "format": "OpenAI",
+            "name": "phi-3",
+            "version": "latest"
+          },
+          "sku": {
+            "name": "Standard",
+            "capacity": 10
+          }
+        }
+      ],
+      "metadata": {
+        "description": "AI model deployments"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('foundryName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "kind": "OpenAI",
+      "sku": {
+        "name": "[if(equals(parameters('sku'), 'Premium'), 'S0', 'S0')]"
+      },
+      "properties": {
+        "customSubDomainName": "[parameters('foundryName')]",
+        "publicNetworkAccess": "Enabled"
+      }
+    },
+    {
+      "copy": {
+        "name": "deployment",
+        "count": "[length(parameters('deployments'))]"
+      },
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', parameters('foundryName'), parameters('deployments')[copyIndex()].name)]",
+      "sku": "[parameters('deployments')[copyIndex()].sku]",
+      "properties": {
+        "model": "[parameters('deployments')[copyIndex()].model]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "foundryId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryName'))]"
+    },
+    "foundryName": {
+      "type": "string",
+      "value": "[parameters('foundryName')]"
+    },
+    "foundryEndpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryName')), '2023-05-01').endpoint]"
+    }
+  }
+}
