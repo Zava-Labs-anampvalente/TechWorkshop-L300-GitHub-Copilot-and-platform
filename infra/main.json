@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "3228836094135634243"
+      "templateHash": "17722429001167033025"
     }
   },
   "parameters": {
@@ -645,8 +645,8 @@
           "roleDefinitionId": {
             "value": "[variables('acrPullRoleDefinitionId')]"
           },
-          "acrResourceId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'acr-deployment'), '2025-04-01').outputs.acrId.value]"
+          "acrName": {
+            "value": "[variables('acrName')]"
           }
         },
         "template": {
@@ -656,7 +656,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "4138755447986424426"
+              "templateHash": "6930305952209692951"
             }
           },
           "parameters": {
@@ -672,10 +672,10 @@
                 "description": "Role Definition ID to assign"
               }
             },
-            "acrResourceId": {
+            "acrName": {
               "type": "string",
               "metadata": {
-                "description": "ACR Resource ID where the role assignment will be applied"
+                "description": "Name of the ACR resource"
               }
             }
           },
@@ -683,7 +683,8 @@
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
-              "name": "[guid(parameters('acrResourceId'), parameters('principalId'), parameters('roleDefinitionId'))]",
+              "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('acrName'))]",
+              "name": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName')), parameters('principalId'), parameters('roleDefinitionId'))]",
               "properties": {
                 "principalId": "[parameters('principalId')]",
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleDefinitionId'))]",
@@ -694,13 +695,12 @@
           "outputs": {
             "roleAssignmentId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.Authorization/roleAssignments', guid(parameters('acrResourceId'), parameters('principalId'), parameters('roleDefinitionId')))]"
+              "value": "[extensionResourceId(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName')), parameters('principalId'), parameters('roleDefinitionId')))]"
             }
           }
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'acr-deployment')]",
         "[resourceId('Microsoft.Resources/deployments', 'web-app-deployment')]"
       ]
     },

@@ -119,7 +119,6 @@ Edit `infra/main.parameters.json` to customize:
 | `appName` | Application name | `zavastorefront` |
 | `acrSku` | ACR SKU (Basic, Standard, Premium) | `Basic` |
 | `appServicePlanSku` | App Service Plan SKU | `B1` |
-| `foundrySku` | Microsoft Foundry SKU | `Standard` |
 | `deployFoundry` | Deploy Microsoft Foundry | `true` |
 
 ## CI/CD with GitHub Actions

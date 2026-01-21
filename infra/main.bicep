@@ -121,7 +121,7 @@ module acrPullRoleAssignment 'modules/role-assignment.bicep' = {
   params: {
     principalId: webApp.outputs.webAppPrincipalId
     roleDefinitionId: acrPullRoleDefinitionId
-    acrResourceId: acr.outputs.acrId
+    acrName: acrName
   }
 }
 
