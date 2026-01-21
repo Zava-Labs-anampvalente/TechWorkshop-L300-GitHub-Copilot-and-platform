@@ -1,0 +1,76 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: zavastorefront
+metadata:
+  template: zavastorefront-dev
+
+services:
+  web:
+    project: ./src
+    language: csharp
+    host: appservice
+
+hooks:
+  preprovision:
+    posix:
+      shell: sh
+      run: |
+        echo "Preparing to provision Azure resources..."
+    windows:
+      shell: pwsh
+      run: |
+        Write-Host "Preparing to provision Azure resources..."
+
+  postprovision:
+    posix:
+      shell: sh
+      run: |
+        echo "Azure resources provisioned successfully"
+        echo "Building and pushing container image to ACR..."
+        # Get ACR name from deployment outputs
+        ACR_NAME=$(azd env get-values | grep ACR_NAME | cut -d'=' -f2 | tr -d '"')
+        if [ -z "$ACR_NAME" ]; then
+          echo "Error: ACR_NAME not found in environment variables"
+          exit 1
+        fi
+        # Build and push container image using ACR build (cloud-side build)
+        az acr build --registry $ACR_NAME --image zavastorefront:latest ./src
+        echo "Container image built and pushed successfully"
+    windows:
+      shell: pwsh
+      run: |
+        Write-Host "Azure resources provisioned successfully"
+        Write-Host "Building and pushing container image to ACR..."
+        # Get ACR name from deployment outputs
+        $ACR_NAME = (azd env get-values | Select-String "ACR_NAME" | ForEach-Object { $_.Line.Split('=')[1].Trim('"') })
+        if ([string]::IsNullOrEmpty($ACR_NAME)) {
+          Write-Host "Error: ACR_NAME not found in environment variables"
+          exit 1
+        }
+        # Build and push container image using ACR build (cloud-side build)
+        az acr build --registry $ACR_NAME --image zavastorefront:latest ./src
+        Write-Host "Container image built and pushed successfully"
+
+  predeploy:
+    posix:
+      shell: sh
+      run: |
+        echo "Preparing to deploy application..."
+    windows:
+      shell: pwsh
+      run: |
+        Write-Host "Preparing to deploy application..."
+
+  postdeploy:
+    posix:
+      shell: sh
+      run: |
+        echo "Application deployed successfully"
+        WEB_APP_URL=$(azd env get-values | grep WEB_APP_URL | cut -d'=' -f2 | tr -d '"')
+        echo "Web App URL: $WEB_APP_URL"
+    windows:
+      shell: pwsh
+      run: |
+        Write-Host "Application deployed successfully"
+        $WEB_APP_URL = (azd env get-values | Select-String "WEB_APP_URL" | ForEach-Object { $_.Line.Split('=')[1].Trim('"') })
+        Write-Host "Web App URL: $WEB_APP_URL"
