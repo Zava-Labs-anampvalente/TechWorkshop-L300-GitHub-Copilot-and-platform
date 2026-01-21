@@ -4,11 +4,11 @@ param principalId string
 @description('Role Definition ID to assign')
 param roleDefinitionId string
 
-@description('Resource ID where the role assignment will be applied')
-param resourceId string
+@description('ACR Resource ID where the role assignment will be applied')
+param acrResourceId string
 
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceId, principalId, roleDefinitionId)
+  name: guid(acrResourceId, principalId, roleDefinitionId)
   scope: resourceGroup()
   properties: {
     principalId: principalId

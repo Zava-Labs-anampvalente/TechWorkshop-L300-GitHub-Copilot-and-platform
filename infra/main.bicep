@@ -36,13 +36,6 @@ param acrSku string = 'Basic'
 ])
 param appServicePlanSku string = 'B1'
 
-@description('Microsoft Foundry SKU')
-@allowed([
-  'Standard'
-  'Premium'
-])
-param foundrySku string = 'Standard'
-
 @description('Deploy Microsoft Foundry')
 param deployFoundry bool = true
 
@@ -128,7 +121,7 @@ module acrPullRoleAssignment 'modules/role-assignment.bicep' = {
   params: {
     principalId: webApp.outputs.webAppPrincipalId
     roleDefinitionId: acrPullRoleDefinitionId
-    resourceId: acr.outputs.acrId
+    acrResourceId: acr.outputs.acrId
   }
 }
 
@@ -138,7 +131,6 @@ module foundry 'modules/foundry.bicep' = if (deployFoundry) {
   params: {
     foundryName: foundryName
     location: location
-    sku: foundrySku
     tags: tags
   }
 }

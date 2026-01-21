@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "9240942390714975819"
+      "templateHash": "3228836094135634243"
     }
   },
   "parameters": {
@@ -66,17 +66,6 @@
       ],
       "metadata": {
         "description": "App Service Plan SKU"
-      }
-    },
-    "foundrySku": {
-      "type": "string",
-      "defaultValue": "Standard",
-      "allowedValues": [
-        "Standard",
-        "Premium"
-      ],
-      "metadata": {
-        "description": "Microsoft Foundry SKU"
       }
     },
     "deployFoundry": {
@@ -656,7 +645,7 @@
           "roleDefinitionId": {
             "value": "[variables('acrPullRoleDefinitionId')]"
           },
-          "resourceId": {
+          "acrResourceId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'acr-deployment'), '2025-04-01').outputs.acrId.value]"
           }
         },
@@ -667,7 +656,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "12395756580964321710"
+              "templateHash": "4138755447986424426"
             }
           },
           "parameters": {
@@ -683,10 +672,10 @@
                 "description": "Role Definition ID to assign"
               }
             },
-            "resourceId": {
+            "acrResourceId": {
               "type": "string",
               "metadata": {
-                "description": "Resource ID where the role assignment will be applied"
+                "description": "ACR Resource ID where the role assignment will be applied"
               }
             }
           },
@@ -694,7 +683,7 @@
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
-              "name": "[guid(parameters('resourceId'), parameters('principalId'), parameters('roleDefinitionId'))]",
+              "name": "[guid(parameters('acrResourceId'), parameters('principalId'), parameters('roleDefinitionId'))]",
               "properties": {
                 "principalId": "[parameters('principalId')]",
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleDefinitionId'))]",
@@ -705,7 +694,7 @@
           "outputs": {
             "roleAssignmentId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.Authorization/roleAssignments', guid(parameters('resourceId'), parameters('principalId'), parameters('roleDefinitionId')))]"
+              "value": "[resourceId('Microsoft.Authorization/roleAssignments', guid(parameters('acrResourceId'), parameters('principalId'), parameters('roleDefinitionId')))]"
             }
           }
         }
@@ -732,9 +721,6 @@
           "location": {
             "value": "[parameters('location')]"
           },
-          "sku": {
-            "value": "[parameters('foundrySku')]"
-          },
           "tags": {
             "value": "[variables('tags')]"
           }
@@ -746,7 +732,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "3417570531531439197"
+              "templateHash": "3816884705257203224"
             }
           },
           "parameters": {
@@ -761,17 +747,6 @@
               "defaultValue": "[resourceGroup().location]",
               "metadata": {
                 "description": "Location for Microsoft Foundry"
-              }
-            },
-            "sku": {
-              "type": "string",
-              "defaultValue": "Standard",
-              "allowedValues": [
-                "Standard",
-                "Premium"
-              ],
-              "metadata": {
-                "description": "SKU for Microsoft Foundry"
               }
             },
             "tags": {
@@ -823,7 +798,7 @@
               "tags": "[parameters('tags')]",
               "kind": "OpenAI",
               "sku": {
-                "name": "[if(equals(parameters('sku'), 'Premium'), 'S0', 'S0')]"
+                "name": "S0"
               },
               "properties": {
                 "customSubDomainName": "[parameters('foundryName')]",

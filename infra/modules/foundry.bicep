@@ -4,13 +4,6 @@ param foundryName string
 @description('Location for Microsoft Foundry')
 param location string = resourceGroup().location
 
-@description('SKU for Microsoft Foundry')
-@allowed([
-  'Standard'
-  'Premium'
-])
-param sku string = 'Standard'
-
 @description('Tags to apply to the resource')
 param tags object = {}
 
@@ -48,7 +41,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   tags: tags
   kind: 'OpenAI'
   sku: {
-    name: sku == 'Premium' ? 'S0' : 'S0'
+    name: 'S0'
   }
   properties: {
     customSubDomainName: foundryName

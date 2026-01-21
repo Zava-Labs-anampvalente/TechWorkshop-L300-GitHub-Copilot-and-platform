@@ -20,9 +20,6 @@
     "appServicePlanSku": {
       "value": "B1"
     },
-    "foundrySku": {
-      "value": "Standard"
-    },
     "deployFoundry": {
       "value": true
     }
